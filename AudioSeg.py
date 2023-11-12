@@ -1,34 +1,47 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys
 from scipy.io import wavfile
 import os
 import numpy as np
-import argparse
 from tqdm import tqdm
 import json
-
 from datetime import datetime, timedelta
 
+# Check if the correct number of arguments were provided
+if len(sys.argv) != 3:
+    print("Usage: {} <input_file> <output_file>".format(sys.argv[0]))
+    sys.exit(1)
+
+input_file = sys.argv[1]
+output_file = sys.argv[2]
 # Utility functions
+
 
 def GetTime(video_seconds):
 
-    if (video_seconds < 0) :
+    if (video_seconds < 0):
         return 00
 
     else:
         sec = timedelta(seconds=float(video_seconds))
-        d = datetime(1,1,1) + sec
+        d = datetime(1, 1, 1) + sec
 
-        instant = str(d.hour).zfill(2) + ':' + str(d.minute).zfill(2) + ':' + str(d.second).zfill(2) + str('.001')
-    
+        instant = str(d.hour).zfill(2) + ':' + str(d.minute).zfill(2) + \
+            ':' + str(d.second).zfill(2) + str('.001')
+
         return instant
+
 
 def GetTotalTime(video_seconds):
 
     sec = timedelta(seconds=float(video_seconds))
-    d = datetime(1,1,1) + sec
+    d = datetime(1, 1, 1) + sec
     delta = str(d.hour) + ':' + str(d.minute) + ":" + str(d.second)
-    
+
     return delta
+
 
 def windows(signal, window_size, step_size):
     if type(window_size) is not int:
@@ -41,8 +54,10 @@ def windows(signal, window_size, step_size):
             break
         yield signal[i_start:i_end]
 
+
 def energy(samples):
     return np.sum(np.power(samples, 2.)) / float(len(samples))
+
 
 def rising_edges(binary_signal):
     previous_value = 0
@@ -53,6 +68,7 @@ def rising_edges(binary_signal):
         previous_value = x
         index += 1
 
+
 '''
 Last Acceptable Values
 
@@ -61,12 +77,12 @@ silence_threshold = 1e-3
 step_duration = 0.03/10
 
 '''
-# Change the arguments and the input file here
-input_file = 'C:\\Teste\\06072012-19775-P01.wav'
-output_dir = 'C:\\Teste\\'
-min_silence_length = 0.6  # The minimum length of silence at which a split may occur [seconds]. Defaults to 3 seconds.
-silence_threshold = 1e-4  # The energy level (between 0.0 and 1.0) below which the signal is regarded as silent.
-step_duration = 0.03/10   # The amount of time to step forward in the input file after calculating energy. Smaller value = slower, but more accurate silence detection. Larger value = faster, but might miss some split opportunities. Defaults to (min-silence-length / 10.).
+# The minimum length of silence at which a split may occur [seconds]. Defaults to 3 seconds.
+min_silence_length = 0.6
+# The energy level (between 0.0 and 1.0) below which the signal is regarded as silent.
+silence_threshold = 1e-4
+# The amount of time to step forward in the input file after calculating energy. Smaller value = slower, but more accurate silence detection. Larger value = faster, but might miss some split opportunities. Defaults to (min-silence-length / 10.).
+step_duration = 0.03/10
 
 
 input_filename = input_file
@@ -83,12 +99,13 @@ print("Splitting {} where energy is below {}% for longer than {}s.".format(
     input_filename,
     silence_threshold * 100.,
     window_duration
-    )
+)
 )
 
 # Read and split the file
 
-sample_rate, samples = input_data=wavfile.read(filename=input_filename, mmap=True)
+sample_rate, samples = input_data = wavfile.read(
+    filename=input_filename, mmap=True)
 
 max_amplitude = np.iinfo(samples.dtype).max
 print(max_amplitude)
@@ -119,10 +136,11 @@ print("Finding silences...")
 cut_samples = [int(t * sample_rate) for t in cut_times]
 cut_samples.append(-1)
 
-cut_ranges = [(i, cut_samples[i], cut_samples[i+1]) for i in range(len(cut_samples) - 1)]
+cut_ranges = [(i, cut_samples[i], cut_samples[i+1])
+              for i in range(len(cut_samples) - 1)]
 
-video_sub = {str(i) : [str(GetTime(((cut_samples[i])/sample_rate))), 
-                       str(GetTime(((cut_samples[i+1])/sample_rate)))] 
+video_sub = {str(i): [str(GetTime(((cut_samples[i])/sample_rate))),
+                      str(GetTime(((cut_samples[i+1])/sample_rate)))]
              for i in range(len(cut_samples) - 1)}
 
 for i, start, stop in tqdm(cut_ranges):
@@ -139,6 +157,6 @@ for i, start, stop in tqdm(cut_ranges):
         )
     else:
         print("Not writing file {}".format(output_file_path))
-        
-with open (output_dir+'\\'+output_filename_prefix+'.json', 'w') as output:
+
+with open(output_dir+'\\'+output_filename_prefix+'.json', 'w') as output:
     json.dump(video_sub, output)
