@@ -17,18 +17,28 @@ def main():
         description='Split a WAV file at points of silence.')
     # Required arguments
     parser.add_argument('input_file', type=str, help='Input audio file')
-    parser.add_argument('output_file', type=str, help='Output audio file')
+    parser.add_argument('output_dir', type=str, help='Output Directory')
 
     # Optional arguments with default values
     parser.add_argument('--min_silence_length', type=float, default=0.6,
                         help='Minimum length of silence (in seconds) to be used for splitting. Default is 0.6 seconds.')
     parser.add_argument('--silence_threshold', type=float,
-                        default=1e-4, help='    # The energy level (between 0.0 and 1.0) below which the signal is regarded as silent.')
+                        default=1e-4, help='The energy level (between 0.0 and 1.0) below which the signal is regarded as silent.')
     parser.add_argument('--step_duration', type=float, default=0.03/10,
                         help='Step duration. Default is 0.003 seconds.')
 
     # Parse the arguments
     args = parser.parse_args()
+
+    # Check to see if input_file exists
+    if not os.path.exists(args.input_file):
+        print("Error: The file '%s' does not exist." % args.input_file)
+        sys.exit(1)
+
+    # Check to see if output_dir exists
+    if not os.path.exists(args.output_dir):
+        print("Error: The directory '%s' does not exist." % args.output_dir)
+        sys.exit(1)
 
     # Pass the arguments to the split_audio function
     split_audio(args.input_file, args.output_file, args.min_silence_length,
