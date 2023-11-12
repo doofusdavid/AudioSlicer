@@ -7,18 +7,32 @@ import os
 import numpy as np
 from tqdm import tqdm
 import json
+import argparse
 from datetime import datetime, timedelta
 
 
 def main():
-    # Check if the correct number of arguments were provided
-    if len(sys.argv) != 3:
-        print("Usage: {} <input_file> <output_file>".format(sys.argv[0]))
-        sys.exit(1)
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Split a WAV file at points of silence.')
+    # Required arguments
+    parser.add_argument('input_file', type=str, help='Input audio file')
+    parser.add_argument('output_file', type=str, help='Output audio file')
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    split_audio(input_file, output_file)
+    # Optional arguments with default values
+    parser.add_argument('--min_silence_length', type=float, default=0.6,
+                        help='Minimum length of silence (in seconds) to be used for splitting. Default is 0.6 seconds.')
+    parser.add_argument('--silence_threshold', type=float,
+                        default=1e-4, help='    # The energy level (between 0.0 and 1.0) below which the signal is regarded as silent.')
+    parser.add_argument('--step_duration', type=float, default=0.03/10,
+                        help='Step duration. Default is 0.003 seconds.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Pass the arguments to the split_audio function
+    split_audio(args.input_file, args.output_file, args.min_silence_length,
+                args.silence_threshold, args.step_duration)
 
 
 if __name__ == "__main__":
@@ -77,7 +91,7 @@ def rising_edges(binary_signal):
         index += 1
 
 
-def split_audio(input_file, output_file):
+def split_audio(input_file, output_file, min_silence_length, silence_threshold, step_duration):
     '''
     Last Acceptable Values
 
